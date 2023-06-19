@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
-from datasets import Data
+from train.datasets import Data
 
 
 class SampledSoftmaxLoss(keras.losses.Loss):
