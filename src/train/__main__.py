@@ -1,4 +1,5 @@
 import sys
+import pickle
 import argparse
 
 from config import Config
@@ -19,4 +20,5 @@ def _parse_config() -> Config:
 if __name__ == "__main__":
     config = _parse_config()
     data = get_data(config)
-    run_training(data, config)
+    history = run_training(data, config)
+    pickle.dump(history.history, open("history.p", "wb"))

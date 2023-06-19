@@ -45,7 +45,9 @@ class Gru4RecModel(keras.models.Model):
 
     def test_step(self, inputs):
         # Forward pass
-        logits = self(inputs, training=False)
+        outputs = self(inputs, training=False)
+        logits = tf.matmul(outputs, tf.transpose(self._movie_id_embedding.embeddings))
+
         label_movie_idx = self._movie_id_lookup(inputs["label_movie_id"])
         loss_val = self._loss(label_movie_idx, logits)
 
