@@ -34,9 +34,9 @@ class Gru4RecModel(keras.models.Model):
     def train_step(self, inputs):
         # Forward pass
         with tf.GradientTape() as tape:
-            logits = self(inputs, training=True)
+            outputs = self(inputs, training=True)
             label = self._movie_id_lookup(inputs["label_movie_id"])
-            loss_val = self._loss(label, logits)
+            loss_val = self._loss(label, outputs)
 
         # Backward pass
         self.optimizer.minimize(loss_val, self.trainable_variables, tape=tape)
@@ -46,14 +46,13 @@ class Gru4RecModel(keras.models.Model):
     def test_step(self, inputs):
         # Forward pass
         outputs = self(inputs, training=False)
-        logits = tf.matmul(outputs, tf.transpose(self._movie_id_embedding.embeddings))
-
-        label_movie_idx = self._movie_id_lookup(inputs["label_movie_id"])
-        loss_val = self._loss(label_movie_idx, logits)
+        label = self._movie_id_lookup(inputs["label_movie_id"])
+        loss_val = self._loss(label, outputs)
 
         # Compute metrics
         # We add one to the output indices because everything is shifted because of the OOV token
+        logits = tf.matmul(outputs, tf.transpose(self._movie_id_embedding.embeddings))
         top_indices = tf.math.top_k(logits, k=1000).indices + 1
-        metric_results = self.compute_metrics(x=None, y=label_movie_idx, y_pred=top_indices, sample_weight=None)
+        metric_results = self.compute_metrics(x=None, y=label, y_pred=top_indices, sample_weight=None)
 
         return {"loss": loss_val, **metric_results}
