@@ -3,7 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 from train.config import Config
-from datasets import Data, get_label_probs_hash_table
+from train.datasets import Data, get_label_probs_hash_table
 from train.losses import VanillaSoftmaxLoss, SampledSoftmaxLoss, InBatchNegSoftmaxLoss
 
 
