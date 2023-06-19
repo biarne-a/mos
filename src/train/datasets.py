@@ -5,6 +5,8 @@ import json
 import numpy as np
 import tensorflow as tf
 
+from config import Config
+
 
 class Data:
     def __init__(
@@ -33,10 +35,10 @@ def _read_unique_train_movie_id_counts(bucket_dir):
     return unique_train_movie_id_counts
 
 
-def get_data(bucket_dir: str, batch_size=64):
-    unique_train_movie_id_counts = _read_unique_train_movie_id_counts(bucket_dir)
+def get_data(config: Config):
+    unique_train_movie_id_counts = _read_unique_train_movie_id_counts(config.data_dir)
 
-    train_filenames = f"{bucket_dir}/tfrecords/train/*.gz"
+    train_filenames = f"{config.data_dir}/tfrecords/train/*.gz"
     train = tf.data.Dataset.list_files(train_filenames, seed=42)
     train = train.interleave(
         lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP"),
@@ -44,7 +46,7 @@ def get_data(bucket_dir: str, batch_size=64):
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 
-    test_filenames = f"{bucket_dir}/tfrecords/test/*.gz"
+    test_filenames = f"{config.data_dir}/tfrecords/test/*.gz"
     test = tf.data.Dataset.list_files(test_filenames, seed=42)
     test = test.interleave(
         lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP"),
@@ -68,7 +70,7 @@ def get_data(bucket_dir: str, batch_size=64):
                 "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
             }
         )
-        .batch(batch_size)
+        .batch(config.batch_size)
     )
 
     test_ds = (
@@ -79,7 +81,7 @@ def get_data(bucket_dir: str, batch_size=64):
                 "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
             }
         )
-        .batch(batch_size)
+        .batch(config.batch_size)
     )
 
     nb_train = 20278780
