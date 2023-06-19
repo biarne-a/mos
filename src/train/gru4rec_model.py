@@ -1,27 +1,30 @@
-from typing import Dict
+from typing import Tuple, List
 import tensorflow as tf
 from tensorflow import keras
 
-from train.losses import VanillaSoftmaxLoss, SampledSoftmaxLoss
+from config import Config
+from datasets import Data, get_label_probs_hash_table
+from train.losses import VanillaSoftmaxLoss, SampledSoftmaxLoss, InBatchNegSoftmaxLoss
 
 
 class Gru4RecModel(keras.models.Model):
-    def __init__(self, movie_id_counts: Dict[int, int], loss_name: str, embedding_dimension: int):
+    def __init__(self, data: Data, config: Config):
         super().__init__()
-        movie_id_counts = list(movie_id_counts.items())
-        movie_id_vocab = [movie_id for movie_id, count in movie_id_counts]
-        movie_id_counts = [count for movie_id, count in movie_id_counts]
+        movie_id_vocab = list(data.movie_id_counts.keys())
         self._movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
-        self._movie_id_embedding = tf.keras.layers.Embedding(len(movie_id_counts) + 1, embedding_dimension)
-        self._gru_layer = tf.keras.layers.GRU(embedding_dimension)
-        self._loss = self._get_loss(loss_name, movie_id_counts)
+        self._movie_id_embedding = tf.keras.layers.Embedding(len(data.movie_id_counts) + 1, config.embedding_dimension)
+        self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
+        self._loss = self._get_loss(data, config)
 
-    def _get_loss(self, loss_name, movie_id_counts):
-        if loss_name == "vanilla-sm":
+    def _get_loss(self, data: Data, config: Config):
+        if config.loss == "vanilla-sm":
             return VanillaSoftmaxLoss(self._movie_id_embedding)
-        if loss_name == "sampled-sm":
-            return SampledSoftmaxLoss(movie_id_counts, self._movie_id_embedding)
-        raise Exception(f"Unknown loss {loss_name}")
+        if config.loss == "in-batch-sm":
+            label_probs = get_label_probs_hash_table(data, self._movie_id_lookup)
+            return InBatchNegSoftmaxLoss(config, self._movie_id_embedding, label_probs)
+        if config.loss == "sampled-sm":
+            return SampledSoftmaxLoss(data, self._movie_id_embedding)
+        raise Exception(f"Unknown loss {config.loss}")
 
     def call(self, inputs, training=False):
         ctx_movie_idx = self._movie_id_lookup(inputs["context_movie_id"])

@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
 
+from datasets import Data
+
 
 class SampledSoftmaxLoss(keras.losses.Loss):
     """This class defines the Sampled Softmax Loss with fixed unigram sampler.
@@ -20,10 +22,10 @@ class SampledSoftmaxLoss(keras.losses.Loss):
         - Compute the cross entropy loss of the extract.
     """
 
-    def __init__(self, label_modalities_counts, movie_id_embeddings: tf.keras.layers.Embedding):
+    def __init__(self, data: Data, movie_id_embeddings: tf.keras.layers.Embedding):
         super().__init__()
-        self._nb_movies = len(label_modalities_counts)
-        self._label_modalities_counts = label_modalities_counts
+        self._nb_movies = len(data.movie_id_counts)
+        self._label_modalities_counts = list(data.movie_id_counts.values())
         self._movie_id_embeddings = movie_id_embeddings
         self._movie_id_biases = tf.zeros(shape=[self._nb_movies + 1], name="proj_b", dtype=tf.float32)
 

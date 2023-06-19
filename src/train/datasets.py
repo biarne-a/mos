@@ -21,7 +21,7 @@ class Data:
         self.nb_train = nb_train
         self.test_ds = test_ds
         self.nb_test = nb_test
-        self.unique_train_movie_id_counts = unique_train_movie_id_counts
+        self.movie_id_counts = unique_train_movie_id_counts
 
 
 def _read_unique_train_movie_id_counts(bucket_dir):
@@ -33,6 +33,18 @@ def _read_unique_train_movie_id_counts(bucket_dir):
             count = int(match.groups()[1])
             unique_train_movie_id_counts[movie_id] = count
     return unique_train_movie_id_counts
+
+
+def get_label_probs_hash_table(data: Data, movie_lookup: tf.keras.layers.StringLookup) -> tf.lookup.StaticHashTable:
+    keys = list(data.movie_id_counts.keys())
+    values = [count / data.nb_train for count in data.movie_id_counts.values()]
+
+    keys = tf.constant(keys, dtype=tf.string)
+    keys = movie_lookup(keys)
+    values = tf.constant(values, dtype=tf.float32)
+
+    return tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(keys, values),
+                                     default_value=0.0)
 
 
 def get_data(config: Config):

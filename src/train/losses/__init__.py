@@ -1,2 +1,3 @@
+from train.losses.in_batch_neg_softmax_loss import InBatchNegSoftmaxLoss
 from train.losses.sampled_softmax_loss import SampledSoftmaxLoss
 from train.losses.vanilla_softmax_loss import VanillaSoftmaxLoss
