@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow import keras
 import sys
 
-from config import Config
+from train.config import Config
 from train.custom_recall import CustomRecall
 from train.datasets import Data
 from train.gru4rec_model import Gru4RecModel

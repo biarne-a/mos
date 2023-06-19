@@ -2,7 +2,7 @@ import sys
 import pickle
 import argparse
 
-from config import Config
+from train.config import Config
 from train.datasets import get_data
 from train.run_training import run_training
 

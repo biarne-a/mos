@@ -5,7 +5,7 @@ import json
 import numpy as np
 import tensorflow as tf
 
-from config import Config
+from train.config import Config
 
 
 class Data:

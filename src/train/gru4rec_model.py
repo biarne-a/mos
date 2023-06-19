@@ -2,7 +2,7 @@ from typing import Tuple, List
 import tensorflow as tf
 from tensorflow import keras
 
-from config import Config
+from train.config import Config
 from datasets import Data, get_label_probs_hash_table
 from train.losses import VanillaSoftmaxLoss, SampledSoftmaxLoss, InBatchNegSoftmaxLoss
 

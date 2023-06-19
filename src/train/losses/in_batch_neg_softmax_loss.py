@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 
-from config import Config
+from train.config import Config
 
 
 class InBatchNegSoftmaxLoss(keras.losses.Loss):
