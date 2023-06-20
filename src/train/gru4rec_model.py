@@ -12,7 +12,7 @@ class Gru4RecModel(keras.models.Model):
         super().__init__()
         movie_id_vocab = list(data.movie_id_counts.keys())
         self._movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
-        self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab, invert=True)
+        self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab, invert=True, oov_token='0')
         self._movie_id_embedding = tf.keras.layers.Embedding(len(data.movie_id_counts) + 1, config.embedding_dimension)
         self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
         self._loss = self._get_loss(data, config)
@@ -58,7 +58,6 @@ class Gru4RecModel(keras.models.Model):
 
     def _get_top_indices(self, hidden):
         logits = tf.matmul(hidden, tf.transpose(self._movie_id_embedding.embeddings))
-        # We add one to the output indices because everything is shifted because of the OOV token
         return tf.math.top_k(logits, k=1000).indices
 
     def predict_step(self, inputs):
