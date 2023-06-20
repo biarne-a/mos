@@ -1,6 +1,6 @@
-from typing import Tuple, List
 import tensorflow as tf
 from tensorflow import keras
+from keras.engine import data_adapter
 
 from train.config import Config
 from train.datasets import Data, get_label_probs_hash_table
@@ -60,8 +60,9 @@ class Gru4RecModel(keras.models.Model):
         logits = tf.matmul(hidden, tf.transpose(self._movie_id_embedding.embeddings))
         return tf.math.top_k(logits, k=at_k).indices
 
-    def predict_step(self, inputs):
-        hidden = self(inputs, training=False)
+    def predict_step(self, data):
+        x, _, _ = data_adapter.unpack_x_y_sample_weight(data)
+        hidden = self(x, training=False)
         top_indices = self._get_top_indices(hidden, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
-        return tf.concat((inputs["label_movie_id"], predictions), axis=1)
+        return tf.concat((x["label_movie_id"], predictions), axis=1)
