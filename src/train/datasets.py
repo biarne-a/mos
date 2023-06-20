@@ -83,6 +83,7 @@ def get_data(config: Config):
             }
         )
         .batch(config.batch_size)
+        .repeat()
     )
 
     test_ds = (
@@ -94,6 +95,7 @@ def get_data(config: Config):
             }
         )
         .batch(config.batch_size)
+        .repeat()
     )
 
     nb_train = 20278780
