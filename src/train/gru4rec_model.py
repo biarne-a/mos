@@ -12,6 +12,7 @@ class Gru4RecModel(keras.models.Model):
         super().__init__()
         movie_id_vocab = list(data.movie_id_counts.keys())
         self._movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
+        self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab, invert=True)
         self._movie_id_embedding = tf.keras.layers.Embedding(len(data.movie_id_counts) + 1, config.embedding_dimension)
         self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
         self._loss = self._get_loss(data, config)
@@ -34,9 +35,9 @@ class Gru4RecModel(keras.models.Model):
     def train_step(self, inputs):
         # Forward pass
         with tf.GradientTape() as tape:
-            outputs = self(inputs, training=True)
+            hidden = self(inputs, training=True)
             label = self._movie_id_lookup(inputs["label_movie_id"])
-            loss_val = self._loss(label, outputs)
+            loss_val = self._loss(label, hidden)
 
         # Backward pass
         self.optimizer.minimize(loss_val, self.trainable_variables, tape=tape)
@@ -45,14 +46,23 @@ class Gru4RecModel(keras.models.Model):
 
     def test_step(self, inputs):
         # Forward pass
-        outputs = self(inputs, training=False)
+        hidden = self(inputs, training=False)
         label = self._movie_id_lookup(inputs["label_movie_id"])
-        loss_val = self._loss(label, outputs)
+        loss_val = self._loss(label, hidden)
 
+        top_indices = self._get_top_indices(hidden)
         # Compute metrics
-        # We add one to the output indices because everything is shifted because of the OOV token
-        logits = tf.matmul(outputs, tf.transpose(self._movie_id_embedding.embeddings))
-        top_indices = tf.math.top_k(logits, k=1000).indices + 1
         metric_results = self.compute_metrics(x=None, y=label, y_pred=top_indices, sample_weight=None)
 
         return {"loss": loss_val, **metric_results}
+
+    def _get_top_indices(self, hidden):
+        logits = tf.matmul(hidden, tf.transpose(self._movie_id_embedding.embeddings))
+        # We add one to the output indices because everything is shifted because of the OOV token
+        return tf.math.top_k(logits, k=1000).indices
+
+    def predict_step(self, inputs):
+        hidden = self(inputs, training=False)
+        top_indices = self._get_top_indices(hidden)
+        predictions = self._inverse_movie_id_lookup(top_indices)
+        return tf.concat((inputs["label_movie_id"], predictions), axis=1)

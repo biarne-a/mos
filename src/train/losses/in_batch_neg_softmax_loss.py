@@ -10,6 +10,7 @@ class InBatchNegSoftmaxLoss(keras.losses.Loss):
                  movie_id_embeddings: tf.keras.layers.Embedding,
                  label_probs: tf.lookup.StaticHashTable):
         super().__init__()
+        # Labels to apply the softmax with (as if we only had "batch size" classes)
         self._in_batch_fake_labels = tf.range(0, config.batch_size)
         self._movie_id_embeddings = movie_id_embeddings
         self._label_probs = label_probs
@@ -20,6 +21,5 @@ class InBatchNegSoftmaxLoss(keras.losses.Loss):
         # Apply log q correction
         label_probs = self._label_probs.lookup(label)
         logits -= tf.math.log(label_probs)
-        # Override labels to apply the softmax as if we only had "batch size" classes
 
         return self._loss(self._in_batch_fake_labels, logits)
