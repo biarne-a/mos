@@ -50,18 +50,18 @@ class Gru4RecModel(keras.models.Model):
         label = self._movie_id_lookup(inputs["label_movie_id"])
         loss_val = self._loss(label, hidden)
 
-        top_indices = self._get_top_indices(hidden)
+        top_indices = self._get_top_indices(hidden, at_k=1000)
         # Compute metrics
         metric_results = self.compute_metrics(x=None, y=label, y_pred=top_indices, sample_weight=None)
 
         return {"loss": loss_val, **metric_results}
 
-    def _get_top_indices(self, hidden):
+    def _get_top_indices(self, hidden, at_k):
         logits = tf.matmul(hidden, tf.transpose(self._movie_id_embedding.embeddings))
-        return tf.math.top_k(logits, k=1000).indices
+        return tf.math.top_k(logits, k=at_k).indices
 
     def predict_step(self, inputs):
         hidden = self(inputs, training=False)
-        top_indices = self._get_top_indices(hidden)
+        top_indices = self._get_top_indices(hidden, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
         return tf.concat((inputs["label_movie_id"], predictions), axis=1)
