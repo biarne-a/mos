@@ -82,8 +82,8 @@ def get_data(config: Config):
                 "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
             }
         )
-        .batch(config.batch_size)
         .repeat()
+        .batch(config.batch_size)
     )
 
     test_ds = (
@@ -94,8 +94,8 @@ def get_data(config: Config):
                 "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
             }
         )
-        .batch(config.batch_size)
         .repeat()
+        .batch(config.batch_size)
     )
 
     nb_train = 20278780
