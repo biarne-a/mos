@@ -65,4 +65,5 @@ class Gru4RecModel(keras.models.Model):
         hidden = self(x, training=False)
         top_indices = self._get_top_indices(hidden, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
-        return tf.concat((x["label_movie_id"], predictions), axis=1)
+        prev_label = tf.reshape(x["context_movie_id"][:, 0], shape=(-1, 1))
+        return tf.concat((prev_label, x["label_movie_id"], predictions), axis=1)
