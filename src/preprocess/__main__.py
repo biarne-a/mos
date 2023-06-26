@@ -1,7 +1,6 @@
-from typing import Tuple, Union, List
+from typing import List, Tuple, Union
 
 import apache_beam as beam
-import tensorflow as tf
 from apache_beam.pvalue import PCollection
 
 
@@ -43,6 +42,7 @@ def _generate_examples_from_single_timeline(timeline: List[int], max_context_len
       examples: Generated examples from this single timeline.
     """
     import tensorflow as tf
+
     examples = []
     for label_idx in range(1, len(timeline)):
         start_idx = max(0, label_idx - max_context_len)
@@ -73,12 +73,15 @@ def _generate_examples(
     ratings: PCollection, min_timeline_len: int, max_context_len: int, data_desc: str
 ) -> PCollection:
     timelines = _convert_to_timelines(ratings, data_desc, min_timeline_len)
-    examples_per_user = timelines | f"{data_desc} - Generate examples from timelines" >> beam.Map(_generate_examples_from_single_timeline, max_context_len=max_context_len)
+    examples_per_user = timelines | f"{data_desc} - Generate examples from timelines" >> beam.Map(
+        _generate_examples_from_single_timeline, max_context_len=max_context_len
+    )
     return examples_per_user | f"{data_desc} - Flatten examples" >> beam.FlatMap(lambda x: x)
 
 
 def _save_in_tfrecords(data_dir: str, examples: PCollection, data_desc: str):
     import tensorflow as tf
+
     output_dir = f"{data_dir}/tfrecords/{data_desc}"
     if not tf.io.gfile.exists(output_dir):
         tf.io.gfile.makedirs(output_dir)
@@ -95,18 +98,12 @@ def _save_train_movie_counts(data_dir: str, counts: PCollection):
 
 def _transform_to_rating(csv_row):
     cells = csv_row.split(",")
-    return {
-        "userId": int(cells[0]),
-        "movieId": int(cells[1]),
-        "rating": float(cells[2]),
-        "timestamp": int(cells[3])
-    }
+    return {"userId": int(cells[0]), "movieId": int(cells[1]), "rating": float(cells[2]), "timestamp": int(cells[3])}
 
 
-def preprocess_with_dataflow(data_dir: str,
-                             min_rating: float = 2.0,
-                             min_timeline_len: int = 3,
-                             max_context_len: int = 10):
+def preprocess_with_dataflow(
+    data_dir: str, min_rating: float = 2.0, min_timeline_len: int = 3, max_context_len: int = 10
+):
     opts = beam.pipeline.PipelineOptions(
         experiments=["use_runner_v2"],
         project="concise-haven-277809",

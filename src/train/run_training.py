@@ -1,6 +1,7 @@
+import sys
+
 import tensorflow as tf
 from tensorflow import keras
-import sys
 
 from train.config import Config
 from train.custom_recall import CustomRecall
@@ -18,7 +19,7 @@ def build_model(data: Data, config: Config):
 
 def _debugger_is_active() -> bool:
     """Return if the debugger is currently active"""
-    return hasattr(sys, 'gettrace') and sys.gettrace() is not None
+    return hasattr(sys, "gettrace") and sys.gettrace() is not None
 
 
 def run_training(data: Data, config: Config):

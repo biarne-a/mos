@@ -1,7 +1,6 @@
 import re
 from typing import Dict
 
-import json
 import numpy as np
 import tensorflow as tf
 
@@ -28,23 +27,11 @@ def _read_unique_train_movie_id_counts(bucket_dir):
     with tf.io.gfile.GFile(f"{bucket_dir}/vocab/train_movie_counts.txt-00000-of-00001") as f:
         unique_train_movie_id_counts = {}
         for line in f.readlines():
-            match = re.match("^\(([0-9]+), ([0-9]+)\)$", line.strip())
+            match = re.match("^\(([0-9]+), ([0-9]+)\)$", line.strip())  # noqa: W605
             movie_id = match.groups()[0]
             count = int(match.groups()[1])
             unique_train_movie_id_counts[movie_id] = count
     return unique_train_movie_id_counts
-
-
-def get_label_probs_hash_table(data: Data, movie_lookup: tf.keras.layers.StringLookup) -> tf.lookup.StaticHashTable:
-    keys = list(data.movie_id_counts.keys())
-    values = [count / data.nb_train for count in data.movie_id_counts.values()]
-
-    keys = tf.constant(keys, dtype=tf.string)
-    keys = movie_lookup(keys)
-    values = tf.constant(values, dtype=tf.float32)
-
-    return tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(keys, values),
-                                     default_value=0.0)
 
 
 def get_data(config: Config):

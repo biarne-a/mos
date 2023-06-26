@@ -1,0 +1,2 @@
+from train.softmaxes.mixture_of_softmaxes import MixtureOfSoftmaxes
+from train.softmaxes.vanilla_softmax import VanillaSoftmax
