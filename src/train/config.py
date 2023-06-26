@@ -8,3 +8,4 @@ class Config:
         self.nb_epochs = args.get("nb_epochs")
         self.batch_size = args.get("batch_size")
         self.embedding_dimension = args.get("embedding_dimension")
+        self.mos_heads = args.get("mos_heads")

@@ -15,7 +15,16 @@ class Gru4RecModel(keras.models.Model):
         self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab, invert=True, oov_token='0')
         self._movie_id_embedding = tf.keras.layers.Embedding(len(data.movie_id_counts) + 1, config.embedding_dimension)
         self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
-        self._loss = self._get_loss(data, config)
+        initializer = tf.keras.initializers.GlorotNormal(seed=42)
+        self._mos_proj_mat = tf.Variable(initial_value=initializer(
+            shape=[config.mos_heads * config.embedding_dimension, config.embedding_dimension], dtype=tf.float32
+        ))
+        self._mos_mix_mat = tf.Variable(initial_value=initializer(
+            shape=[config.mos_heads, config.embedding_dimension], dtype=tf.float32
+        ))
+        self._loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        # self._loss = self._get_loss(data, config)
+        self._config = config
 
     def _get_loss(self, data: Data, config: Config):
         if config.loss == "vanilla-sm":
@@ -30,14 +39,22 @@ class Gru4RecModel(keras.models.Model):
     def call(self, inputs, training=False):
         ctx_movie_idx = self._movie_id_lookup(inputs["context_movie_id"])
         ctx_movie_emb = self._movie_id_embedding(ctx_movie_idx)
-        return self._gru_layer(ctx_movie_emb)
+        hidden = self._gru_layer(ctx_movie_emb)
+        mos_projections = tf.tanh(tf.matmul(hidden, tf.transpose(self._mos_proj_mat)))
+        mos_projections = tf.reshape(mos_projections, shape=(self._config.batch_size, self._config.mos_heads, self._config.embedding_dimension))
+        pi_values_logits = tf.matmul(hidden, tf.transpose(self._mos_mix_mat))
+        pi_values = tf.nn.softmax(pi_values_logits)
+        head_logits = tf.matmul(mos_projections, tf.transpose(self._movie_id_embedding.embeddings))
+        head_sm = tf.nn.softmax(head_logits)
+        probs = tf.reduce_sum(tf.expand_dims(pi_values, axis=-1) * head_sm, axis=1)
+        return probs
 
     def train_step(self, inputs):
         # Forward pass
         with tf.GradientTape() as tape:
-            hidden = self(inputs, training=True)
+            probs = self(inputs, training=True)
             label = self._movie_id_lookup(inputs["label_movie_id"])
-            loss_val = self._loss(label, hidden)
+            loss_val = self._loss(label, probs)
 
         # Backward pass
         self.optimizer.minimize(loss_val, self.trainable_variables, tape=tape)
@@ -46,24 +63,23 @@ class Gru4RecModel(keras.models.Model):
 
     def test_step(self, inputs):
         # Forward pass
-        hidden = self(inputs, training=False)
+        probs = self(inputs, training=False)
         label = self._movie_id_lookup(inputs["label_movie_id"])
-        loss_val = self._loss(label, hidden)
+        loss_val = self._loss(label, probs)
 
-        top_indices = self._get_top_indices(hidden, at_k=1000)
+        top_indices = self._get_top_indices(probs, at_k=1000)
         # Compute metrics
         metric_results = self.compute_metrics(x=None, y=label, y_pred=top_indices, sample_weight=None)
 
         return {"loss": loss_val, **metric_results}
 
-    def _get_top_indices(self, hidden, at_k):
-        logits = tf.matmul(hidden, tf.transpose(self._movie_id_embedding.embeddings))
-        return tf.math.top_k(logits, k=at_k).indices
+    def _get_top_indices(self, probs, at_k):
+        return tf.math.top_k(probs, k=at_k).indices
 
     def predict_step(self, data):
         x, _, _ = data_adapter.unpack_x_y_sample_weight(data)
-        hidden = self(x, training=False)
-        top_indices = self._get_top_indices(hidden, at_k=100)
+        probs = self(x, training=False)
+        top_indices = self._get_top_indices(probs, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
         prev_label = tf.reshape(x["context_movie_id"][:, 0], shape=(-1, 1))
         return tf.concat((prev_label, x["label_movie_id"], predictions), axis=1)

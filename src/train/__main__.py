@@ -14,6 +14,7 @@ def _parse_config() -> Config:
     parser.add_argument("--nb_epochs", required=False, type=int, default=3)
     parser.add_argument("--batch_size", required=False, type=int, default=64)
     parser.add_argument("--embedding_dimension", required=False, type=int, default=32)
+    parser.add_argument("--mos_heads", required=False, type=int, default=4)
     return Config(vars(parser.parse_args(args=sys.argv[1:])))
 
 
