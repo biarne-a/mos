@@ -26,7 +26,7 @@ class Gru4RecModel(keras.models.Model):
             return MixtureOfSoftmaxes(config, self._movie_id_embedding)
         if config.softmax_type == "vanilla-sm":
             return VanillaSoftmax(self._movie_id_embedding)
-        raise Exception(f"Unknown softmax type: {self._config.softmax_type}")
+        raise Exception(f"Unknown softmax type: {config.softmax_type}")
 
     def call(self, inputs, training=False):
         ctx_movie_idx = self._movie_id_lookup(inputs["context_movie_id"])

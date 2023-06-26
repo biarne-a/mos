@@ -4,9 +4,9 @@ from train.config import Config
 
 
 class MixtureOfSoftmaxes(tf.keras.layers.Layer):
-    def __init__(self, config: Config, movie_id_embeddings: tf.keras.layers.Embedding):
+    def __init__(self, config: Config, movie_id_embedding: tf.keras.layers.Embedding):
         super().__init__()
-        self._movie_id_embeddings = movie_id_embeddings
+        self._movie_id_embedding = movie_id_embedding
         initializer = tf.keras.initializers.GlorotNormal(seed=42)
         self._mos_proj_mat = tf.Variable(
             initial_value=initializer(
@@ -16,6 +16,7 @@ class MixtureOfSoftmaxes(tf.keras.layers.Layer):
         self._mos_mix_mat = tf.Variable(
             initial_value=initializer(shape=[config.mos_heads, config.embedding_dimension], dtype=tf.float32)
         )
+        self._config = config
 
     def call(self, inputs):
         mos_projections = tf.tanh(tf.matmul(inputs, tf.transpose(self._mos_proj_mat)))
