@@ -25,7 +25,7 @@ def _debugger_is_active() -> bool:
 def run_training(data: Data, config: Config):
     model = build_model(data, config)
     model.compile(
-        optimizer=tf.keras.optimizers.Adagrad(learning_rate=5e-2),
+        optimizer=tf.keras.optimizers.Adagrad(learning_rate=2e-1),
         metrics=[CustomRecall(k=100), CustomRecall(k=500), CustomRecall(k=1000)],
         run_eagerly=_debugger_is_active(),
     )
