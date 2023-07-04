@@ -7,3 +7,4 @@ black==23.3.0
 autoflake==1.7.5
 flake8==6.0.0
 apache-beam[gcp]==2.48.0
+google-cloud-storage==2.10.0

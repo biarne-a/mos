@@ -7,10 +7,12 @@ from train.config import Config
 from train.custom_recall import CustomRecall
 from train.datasets import Data
 from train.gru4rec_model import Gru4RecModel
+from train.save_model_callback import SaveModelCallback
 
 
-def get_callbacks():
-    return [keras.callbacks.TensorBoard(log_dir="logs", update_freq=100)]
+def get_callbacks(config: Config, model: keras.models.Model):
+    return [keras.callbacks.TensorBoard(log_dir="logs", update_freq=100),
+            SaveModelCallback(config, model)]
 
 
 def build_model(data: Data, config: Config):
@@ -35,6 +37,6 @@ def run_training(data: Data, config: Config):
         steps_per_epoch=data.nb_train // config.batch_size,
         validation_data=data.test_ds,
         validation_steps=data.nb_test // config.batch_size,
-        callbacks=get_callbacks(),
+        callbacks=get_callbacks(config, model),
         verbose=1,
     )
