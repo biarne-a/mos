@@ -29,6 +29,6 @@ class SaveModelCallback(keras.callbacks.Callback):
         logging.info(f"Saving model at epoch {epoch}")
         save_name = f"{self._config.exp_name}_{epoch}"
         self._model.save(save_name, include_optimizer=False)
-        self._upload_from_directory(
-            local_path=save_name, dest_bucket_name=self._config.bucket_name, gcs_path=f"models/{save_name}"
-        )
+        self._upload_from_directory(local_path=save_name,
+                                    dest_bucket_name=self._config.bucket_name,
+                                    gcs_path=f"models/{self._config.exp_name}/{save_name}")
