@@ -5,7 +5,7 @@ import logging
 from tensorflow import keras
 from google.cloud import storage
 
-from config import Config
+from train.config import Config
 
 
 class SaveModelCallback(keras.callbacks.Callback):
