@@ -2,9 +2,9 @@ import tensorflow as tf
 from keras.engine import data_adapter
 from tensorflow import keras
 
-from train.config import Config
-from train.datasets import Data
-from train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax
+from mos.train.config import Config
+from mos.train.datasets import Data
+from mos.train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax
 
 
 class Gru4RecModel(keras.models.Model):

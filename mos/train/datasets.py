@@ -4,7 +4,7 @@ from typing import Dict
 import numpy as np
 import tensorflow as tf
 
-from train.config import Config
+from mos.train.config import Config
 
 
 class Data:

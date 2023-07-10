@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from train.config import Config
+from mos.train.config import Config
 
 
 class MixtureOfSoftmaxes(tf.keras.layers.Layer):

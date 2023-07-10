@@ -1,10 +1,9 @@
 import argparse
-import pickle
 import sys
 
-from train.config import Config
-from train.datasets import get_data
-from train.run_training import run_training
+from mos.train.config import Config
+from mos.train.modal_init import stub
+from mos.train.run_training import run_training
 
 
 def _parse_config() -> Config:
@@ -18,8 +17,11 @@ def _parse_config() -> Config:
     return Config(vars(parser.parse_args(args=sys.argv[1:])))
 
 
-if __name__ == "__main__":
+@stub.local_entrypoint()
+def run():
     config = _parse_config()
-    data = get_data(config)
-    history = run_training(data, config)
-    pickle.dump(history.history, open("history.p", "wb"))
+    run_training(config)
+
+
+if __name__ == "__main__":
+    run()
