@@ -2,7 +2,6 @@ import argparse
 import sys
 
 from mos.train.config import Config
-from mos.train.modal_init import stub
 from mos.train.run_training import run_training
 
 

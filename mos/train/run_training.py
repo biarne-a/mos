@@ -8,7 +8,6 @@ from mos.train.custom_recall import CustomRecall
 from mos.train.datasets import Data, get_data
 from mos.train.gru4rec_model import Gru4RecModel
 from mos.train.save_model_callback import SaveModelCallback
-from mos.train.modal_init import stub, custom_image
 from mos.train.save_results import save_history, save_predictions
 
 
@@ -28,7 +27,6 @@ def _debugger_is_active() -> bool:
     return hasattr(sys, "gettrace") and sys.gettrace() is not None
 
 
-@stub.function(image=custom_image, gpu="T4", timeout=86400)
 def run_training(config: Config):
     data = get_data(config)
 
