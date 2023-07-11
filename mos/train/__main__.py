@@ -16,7 +16,6 @@ def _parse_config() -> Config:
     return Config(vars(parser.parse_args(args=sys.argv[1:])))
 
 
-@stub.local_entrypoint()
 def run():
     config = _parse_config()
     run_training(config)
