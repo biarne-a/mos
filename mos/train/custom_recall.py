@@ -2,8 +2,8 @@ import tensorflow as tf
 
 
 class CustomRecall(tf.keras.metrics.Metric):
-    def __init__(self, k: int, name="recall"):
-        super().__init__(name=f"{name}_at_{k}")
+    def __init__(self, k: int, name="recall", **kwargs):
+        super().__init__(name=f"{name}_at_{k}", **kwargs)
         self._cumulative_recall = tf.Variable(0.0)
         self._sum_weights = tf.Variable(0.0)
         self._k = k
