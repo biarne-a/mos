@@ -21,7 +21,7 @@ class MixtureOfSoftmaxes(tf.keras.layers.Layer):
     def call(self, inputs):
         mos_projections = tf.tanh(tf.matmul(inputs, tf.transpose(self._mos_proj_mat)))
         mos_projections = tf.reshape(
-            mos_projections, shape=(self._config.batch_size, self._config.mos_heads, self._config.embedding_dimension)
+            mos_projections, shape=(-1, self._config.mos_heads, self._config.embedding_dimension)
         )
         pi_values_logits = tf.matmul(inputs, tf.transpose(self._mos_mix_mat))
         pi_values = tf.nn.softmax(pi_values_logits)

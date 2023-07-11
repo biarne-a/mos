@@ -51,6 +51,7 @@ def get_data(config: Config):
         lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP"),
         cycle_length=8,
         num_parallel_calls=tf.data.AUTOTUNE,
+        deterministic=True
     )
 
     feature_description = {
