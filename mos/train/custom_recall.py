@@ -8,6 +8,10 @@ class CustomRecall(tf.keras.metrics.Metric):
         self._sum_weights = tf.Variable(0.0)
         self._k = k
 
+    def get_config(self):
+        super_config = super().get_config()
+        return {"k": self._k, **super_config}
+
     def _recall_at_k(self, true_indices, top_indices):
         batch_size = tf.shape(top_indices)[0]
         top_indices = tf.slice(top_indices, [0, 0], [batch_size, self._k])
