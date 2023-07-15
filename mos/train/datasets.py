@@ -14,13 +14,17 @@ class Data:
         nb_train: int,
         test_ds: tf.data.Dataset,
         nb_test: int,
-        unique_train_movie_id_counts: Dict[str, int],
+        movie_id_counts: Dict[str, int],
     ):
         self.train_ds = train_ds
         self.nb_train = nb_train
         self.test_ds = test_ds
         self.nb_test = nb_test
-        self.movie_id_counts = unique_train_movie_id_counts
+        self.movie_id_counts = movie_id_counts
+
+    @property
+    def movie_id_vocab(self):
+        return list(self.movie_id_counts.keys())
 
 
 def _read_unique_train_movie_id_counts(bucket_dir):

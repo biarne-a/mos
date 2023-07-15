@@ -1,25 +1,39 @@
 import tensorflow as tf
-from keras.engine import data_adapter
+from keras import utils
 from tensorflow import keras
+from typing import List
 
 from mos.train.config import Config
-from mos.train.datasets import Data
 from mos.train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax
 
 
 class Gru4RecModel(keras.models.Model):
-    def __init__(self, data: Data, config: Config):
+    def __init__(self, movie_id_vocab: List[str], config: Config):
         super().__init__()
-        movie_id_vocab = list(data.movie_id_counts.keys())
+        self._movie_id_vocab = movie_id_vocab
         self._movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
         self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(
             vocabulary=movie_id_vocab, invert=True, oov_token="0"
         )
-        self._movie_id_embedding = tf.keras.layers.Embedding(len(data.movie_id_counts) + 1, config.embedding_dimension)
+        self._movie_id_embedding = tf.keras.layers.Embedding(len(movie_id_vocab) + 1, config.embedding_dimension)
         self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
         self._softmax = self._get_softmax(config)
         self._loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
         self._config = config
+
+    @classmethod
+    def from_config(cls, keras_config, custom_objects=None):
+        json_config = keras_config.pop("config")
+        config = Config(json_config)
+        return Gru4RecModel(keras_config["movie_id_vocab"], config)
+
+    def get_config(self):
+        super_config = super().get_config()
+        return {
+            "movie_id_vocab": self._movie_id_vocab,
+            "config": self._config.to_json(),
+            **super_config
+        }
 
     def _get_softmax(self, config):
         if config.softmax_type == "mos":
@@ -62,7 +76,7 @@ class Gru4RecModel(keras.models.Model):
         return tf.math.top_k(probs, k=at_k).indices
 
     def predict_step(self, data):
-        x, _, _ = data_adapter.unpack_x_y_sample_weight(data)
+        x, _, _ = utils.unpack_x_y_sample_weight(data)
         probs = self(x, training=False)
         top_indices = self._get_top_indices(probs, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
