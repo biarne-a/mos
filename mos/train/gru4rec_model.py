@@ -4,21 +4,20 @@ from tensorflow import keras
 from typing import List
 
 from mos.train.config import Config
-from mos.train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax
+from mos.train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax, SampledMixtureOfSoftmaxes
 
 
 class Gru4RecModel(keras.models.Model):
     def __init__(self, movie_id_vocab: List[str], config: Config):
         super().__init__()
         self._movie_id_vocab = movie_id_vocab
-        self._movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
         self._inverse_movie_id_lookup = tf.keras.layers.StringLookup(
             vocabulary=movie_id_vocab, invert=True, oov_token="0"
         )
-        self._movie_id_embedding = tf.keras.layers.Embedding(len(movie_id_vocab) + 1, config.embedding_dimension)
+        vocab_length = len(movie_id_vocab)
+        self._movie_id_embedding = tf.keras.layers.Embedding(vocab_length + 1, config.embedding_dimension)
         self._gru_layer = tf.keras.layers.GRU(config.embedding_dimension)
-        self._softmax = self._get_softmax(config)
-        self._loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        self._softmax = self._get_softmax(config, vocab_length)
         self._config = config
 
     @classmethod
@@ -35,25 +34,25 @@ class Gru4RecModel(keras.models.Model):
             **super_config
         }
 
-    def _get_softmax(self, config):
-        if config.softmax_type == "mos":
-            return MixtureOfSoftmaxes(config, self._movie_id_embedding)
+    def _get_softmax(self, config: Config, vocab_length: int):
         if config.softmax_type == "vanilla-sm":
             return VanillaSoftmax(self._movie_id_embedding)
+        if config.softmax_type == "mos":
+            return MixtureOfSoftmaxes(config, self._movie_id_embedding)
+        if config.softmax_type == "sampled-mos":
+            return SampledMixtureOfSoftmaxes(config, self._movie_id_embedding, vocab_length)
         raise Exception(f"Unknown softmax type: {config.softmax_type}")
 
     def call(self, inputs, training=False):
-        ctx_movie_idx = self._movie_id_lookup(inputs["context_movie_id"])
-        ctx_movie_emb = self._movie_id_embedding(ctx_movie_idx)
+        label = inputs["label_movie_id"]
+        ctx_movie_emb = self._movie_id_embedding(inputs["context_movie_id"])
         hidden = self._gru_layer(ctx_movie_emb)
-        return self._softmax(hidden)
+        return self._softmax(label, hidden, training)
 
     def train_step(self, inputs):
         # Forward pass
         with tf.GradientTape() as tape:
-            probs = self(inputs, training=True)
-            label = self._movie_id_lookup(inputs["label_movie_id"])
-            loss_val = self._loss(label, probs)
+            _, loss_val = self(inputs, training=True)
 
         # Backward pass
         self.optimizer.minimize(loss_val, self.trainable_variables, tape=tape)
@@ -62,13 +61,11 @@ class Gru4RecModel(keras.models.Model):
 
     def test_step(self, inputs):
         # Forward pass
-        probs = self(inputs, training=False)
-        label = self._movie_id_lookup(inputs["label_movie_id"])
-        loss_val = self._loss(label, probs)
+        probs, loss_val = self(inputs, training=False)
 
         top_indices = self._get_top_indices(probs, at_k=1000)
         # Compute metrics
-        metric_results = self.compute_metrics(x=None, y=label, y_pred=top_indices, sample_weight=None)
+        metric_results = self.compute_metrics(x=None, y=inputs["label_movie_id"], y_pred=top_indices, sample_weight=None)
 
         return {"loss": loss_val, **metric_results}
 
@@ -77,8 +74,10 @@ class Gru4RecModel(keras.models.Model):
 
     def predict_step(self, data):
         x, _, _ = utils.unpack_x_y_sample_weight(data)
-        probs = self(x, training=False)
+        probs, _ = self(x, training=False)
         top_indices = self._get_top_indices(probs, at_k=100)
         predictions = self._inverse_movie_id_lookup(top_indices)
+        label = self._inverse_movie_id_lookup(x["label_movie_id"])
         prev_label = tf.reshape(x["context_movie_id"][:, 0], shape=(-1, 1))
-        return tf.concat((prev_label, x["label_movie_id"], predictions), axis=1)
+        prev_label = self._inverse_movie_id_lookup(prev_label)
+        return tf.concat((prev_label, label, predictions), axis=1)

@@ -8,13 +8,13 @@ from mos.train.config import Config
 
 
 def save_history(history: tf.keras.callbacks.History, config: Config):
-    output_file = f"{config.data_dir}/results/history_{config.softmax_type}_{config.embedding_dimension}.p"
+    output_file = f"{config.data_dir}/results/history_{config.exp_name}.p"
     pickle.dump(history.history, tf.io.gfile.GFile(output_file, "wb"))
 
 
 def save_predictions(config, data, model):
     nb_test_batches = data.nb_test // config.batch_size
-    local_filename = f"{config.data_dir}/results/predictions_{config.softmax_type}_{config.embedding_dimension}.csv"
+    local_filename = f"{config.data_dir}/results/predictions_{config.exp_name}.csv"
     with tf.io.gfile.GFile(local_filename, "w") as fileh:
         columns = ["prev_label", "label"] + [f"output_{i}" for i in range(100)]
         header = ",".join(columns)

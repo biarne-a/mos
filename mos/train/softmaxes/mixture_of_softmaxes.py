@@ -17,23 +17,18 @@ class MixtureOfSoftmaxes(tf.keras.layers.Layer):
             initial_value=initializer(shape=[config.mos_heads, config.embedding_dimension], dtype=tf.float32)
         )
         self._config = config
+        self._loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
 
-    def call(self, inputs):
+    def call(self, label, inputs, training):
         mos_projections = tf.tanh(tf.matmul(inputs, tf.transpose(self._mos_proj_mat)))
         mos_projections = tf.reshape(
             mos_projections, shape=(-1, self._config.mos_heads, self._config.embedding_dimension)
         )
         pi_values_logits = tf.matmul(inputs, tf.transpose(self._mos_mix_mat))
         pi_values = tf.nn.softmax(pi_values_logits)
-        return self._compute_mos_low_mem(mos_projections, pi_values)
+        return self._compute_mos(label, mos_projections, pi_values)
 
-    def _compute_mos_high_mem(self, mos_projections, pi_values):
-        """The fastest way to compute the mos but requires more memory"""
-        head_logits = tf.matmul(mos_projections, tf.transpose(self._movie_id_embedding.embeddings))
-        head_sm = tf.nn.softmax(head_logits)
-        return tf.reduce_sum(tf.expand_dims(pi_values, axis=-1) * head_sm, axis=1)
-
-    def _compute_mos_low_mem(self, mos_projections, pi_values):
+    def _compute_mos(self, label, mos_projections, pi_values):
         probs = None
         for i in range(self._config.mos_heads):
             head_logits = tf.matmul(mos_projections[:, i, :], tf.transpose(self._movie_id_embedding.embeddings))
@@ -42,4 +37,6 @@ class MixtureOfSoftmaxes(tf.keras.layers.Layer):
                 probs = tf.expand_dims(pi_values[:, i], axis=-1) * head_probs
             else:
                 probs += tf.expand_dims(pi_values[:, i], axis=-1) * head_probs
-        return probs
+
+        loss_value = self._loss(label, probs)
+        return probs, loss_value

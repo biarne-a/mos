@@ -62,30 +62,24 @@ def get_data(config: Config):
         "context_movie_id": tf.io.FixedLenFeature([10], tf.int64, default_value=np.repeat(0, 10)),
         "label_movie_id": tf.io.FixedLenFeature([1], tf.int64, default_value=0),
     }
+    movie_id_vocab = list(unique_train_movie_id_counts.keys())
+    movie_id_lookup = tf.keras.layers.StringLookup(vocabulary=movie_id_vocab)
 
     def _parse_function(example_proto):
-        return tf.io.parse_single_example(example_proto, feature_description)
+        x = tf.io.parse_single_example(example_proto, feature_description)
+        return {
+            "context_movie_id": movie_id_lookup(tf.strings.as_string(x["context_movie_id"])),
+            "label_movie_id": movie_id_lookup(tf.strings.as_string(x["label_movie_id"])),
+        }
 
     train_ds = (
         train.map(_parse_function)
-        .map(
-            lambda x: {
-                "context_movie_id": tf.strings.as_string(x["context_movie_id"]),
-                "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
-            }
-        )
         .repeat()
         .batch(config.batch_size)
     )
 
     test_ds = (
         test.map(_parse_function)
-        .map(
-            lambda x: {
-                "context_movie_id": tf.strings.as_string(x["context_movie_id"]),
-                "label_movie_id": tf.strings.as_string(x["label_movie_id"]),
-            }
-        )
         .repeat()
         .batch(config.batch_size)
     )

@@ -1,5 +1,6 @@
 import sys
 
+import tensorflow as tf
 from tensorflow import keras
 
 from mos.train.config import Config
@@ -32,6 +33,7 @@ def run_training(config: Config):
     model = build_model(data, config)
     model.compile(
         optimizer=keras.optimizers.Adagrad(learning_rate=2e-1),
+        #optimizer=keras.optimizers.Adam(learning_rate=1e-3),
         metrics=[CustomRecall(k=100), CustomRecall(k=500), CustomRecall(k=1000)],
         run_eagerly=_debugger_is_active(),
     )
