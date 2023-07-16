@@ -22,7 +22,9 @@ class Config:
 
     @property
     def exp_name(self):
-        return f"{self.softmax_type}{self.mos_heads}_{self.embedding_dimension}"
+        if self.softmax_type == "mos":
+            return f"{self.softmax_type}_{self.mos_heads}_{self.embedding_dimension}"
+        return f"{self.softmax_type}_{self.embedding_dimension}"
 
     def to_json(self):
         return self._args
