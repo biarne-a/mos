@@ -1,10 +1,11 @@
+from typing import List
+
 import tensorflow as tf
 from keras import utils
 from tensorflow import keras
-from typing import List
 
 from mos.train.config import Config
-from mos.train.softmaxes import MixtureOfSoftmaxes, VanillaSoftmax, SampledMixtureOfSoftmaxes
+from mos.train.softmaxes import MixtureOfSoftmaxes, SampledMixtureOfSoftmaxes, VanillaSoftmax
 
 
 class Gru4RecModel(keras.models.Model):
@@ -28,11 +29,7 @@ class Gru4RecModel(keras.models.Model):
 
     def get_config(self):
         super_config = super().get_config()
-        return {
-            "movie_id_vocab": self._movie_id_vocab,
-            "config": self._config.to_json(),
-            **super_config
-        }
+        return {"movie_id_vocab": self._movie_id_vocab, "config": self._config.to_json(), **super_config}
 
     def _get_softmax(self, config: Config, vocab_length: int):
         if config.softmax_type == "vanilla-sm":
@@ -65,7 +62,9 @@ class Gru4RecModel(keras.models.Model):
 
         top_indices = self._get_top_indices(probs, at_k=1000)
         # Compute metrics
-        metric_results = self.compute_metrics(x=None, y=inputs["label_movie_id"], y_pred=top_indices, sample_weight=None)
+        metric_results = self.compute_metrics(
+            x=None, y=inputs["label_movie_id"], y_pred=top_indices, sample_weight=None
+        )
 
         return {"loss": loss_val, **metric_results}
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRC_DIR="./src"
+SRC_DIR="./mos"
 echo "Running isort ..."
 isort $SRC_DIR --profile black --line-length 120
 echo "Running black ..."

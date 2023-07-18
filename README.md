@@ -6,6 +6,12 @@ The traditional softmax is limited in its capacity to fully model tasks like nat
 The Mixture of Softmaxes by Yang et al. allows for overcoming the bottleneck by increasing the expressiveness of the network without exploding the number of parameters.
 In this work, we study whether this limitation also applies to deep session-based recommender systems using the movielens-25m dataset.
 
+
+## Installation
+To install the requirements you can use conda. You can then simply type 
+`make install` or `make install_m2` if you are on a mac m2 or m1.
+
+
 ## Conclusion
 The main takeaways from this work are the following. The MoS effectiveness is correlated with:
 - data volume. It introduces an additional burden on the data volume requirements per item by increasing modeling complexity. Performance is increased when the number of observations per item is sufficient.

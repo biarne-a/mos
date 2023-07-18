@@ -55,7 +55,7 @@ def get_data(config: Config):
         lambda x: tf.data.TFRecordDataset(x, compression_type="GZIP"),
         cycle_length=8,
         num_parallel_calls=tf.data.AUTOTUNE,
-        deterministic=True
+        deterministic=True,
     )
 
     feature_description = {
@@ -72,17 +72,9 @@ def get_data(config: Config):
             "label_movie_id": movie_id_lookup(tf.strings.as_string(x["label_movie_id"])),
         }
 
-    train_ds = (
-        train.map(_parse_function)
-        .repeat()
-        .batch(config.batch_size)
-    )
+    train_ds = train.map(_parse_function).repeat().batch(config.batch_size)
 
-    test_ds = (
-        test.map(_parse_function)
-        .repeat()
-        .batch(config.batch_size)
-    )
+    test_ds = test.map(_parse_function).repeat().batch(config.batch_size)
 
     nb_train = 20278780
     nb_test = 2982077

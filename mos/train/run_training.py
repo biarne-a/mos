@@ -1,20 +1,18 @@
 import sys
 
-import tensorflow as tf
 from tensorflow import keras
 
 from mos.train.config import Config
 from mos.train.custom_recall import CustomRecall
 from mos.train.datasets import Data, get_data
 from mos.train.gru4rec_model import Gru4RecModel
-from mos.train.save_model_callback import SaveModelCallback
 from mos.train.save_results import save_history, save_predictions
 
 
 def get_callbacks(config: Config, model: keras.models.Model):
     return [
         keras.callbacks.TensorBoard(log_dir="logs", update_freq=100),
-        #SaveModelCallback(config, model)
+        # SaveModelCallback(config, model)
     ]
 
 
@@ -33,7 +31,7 @@ def run_training(config: Config):
     model = build_model(data, config)
     model.compile(
         optimizer=keras.optimizers.Adagrad(learning_rate=2e-1),
-        #optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+        # optimizer=keras.optimizers.Adam(learning_rate=1e-3),
         metrics=[CustomRecall(k=100), CustomRecall(k=500), CustomRecall(k=1000)],
         run_eagerly=_debugger_is_active(),
     )

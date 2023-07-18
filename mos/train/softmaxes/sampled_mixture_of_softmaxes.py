@@ -5,10 +5,7 @@ from mos.train.config import Config
 
 
 class SampledMixtureOfSoftmaxes(tf.keras.layers.Layer):
-    def __init__(self,
-                 config: Config,
-                 movie_id_embedding: tf.keras.layers.Embedding,
-                 vocab_length: int):
+    def __init__(self, config: Config, movie_id_embedding: tf.keras.layers.Embedding, vocab_length: int):
         super().__init__()
         self._movie_id_embedding = movie_id_embedding
         initializer = tf.keras.initializers.GlorotNormal(seed=42)
@@ -56,8 +53,9 @@ class SampledMixtureOfSoftmaxes(tf.keras.layers.Layer):
         sampled_labels = None
         for i in range(self._config.mos_heads):
             head_inputs = mos_projections[:, i, :]
-            head_probs, sampled_labels = self._compute_head_probs(head_inputs, labels, num_neg_samples,
-                                                                  sampled_values, training)
+            head_probs, sampled_labels = self._compute_head_probs(
+                head_inputs, labels, num_neg_samples, sampled_values, training
+            )
 
             if i == 0:
                 probs = tf.expand_dims(pi_values[:, i], axis=-1) * head_probs
@@ -84,7 +82,8 @@ class SampledMixtureOfSoftmaxes(tf.keras.layers.Layer):
                 num_classes=self._vocab_length,
                 sampled_values=sampled_values,
                 subtract_log_q=True,
-                seed=42)
+                seed=42,
+            )
             sampled_labels = tf.stop_gradient(sampled_labels)
             head_probs = tf.nn.softmax(sampled_logits)
         else:

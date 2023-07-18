@@ -1,8 +1,8 @@
 import pickle
-from tqdm import tqdm
 
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 
 from mos.train.config import Config
 
@@ -22,7 +22,7 @@ def save_predictions(config, data, model):
         i_batch = 0
         for batch in tqdm(data.test_ds.as_numpy_iterator(), total=nb_test_batches):
             predictions = model.predict_on_batch(batch)
-            np.savetxt(fileh, predictions.astype(int), fmt='%i', delimiter=',')
+            np.savetxt(fileh, predictions.astype(int), fmt="%i", delimiter=",")
             i_batch += 1
             if i_batch == nb_test_batches:
                 break
